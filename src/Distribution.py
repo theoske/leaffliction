@@ -1,17 +1,21 @@
 import os
 import matplotlib.pyplot as plt
+from global_var import *
 
 
 def get_distribution(data_path : str) -> list:
     """
     Takes a directory's path, gets the subdirectories name and counts their files.
     Since the subdirectories can belong to multiple plant categories (ex: apple, grape...) we also retrieve it.
+    cat dict-> dirslists -> dirdict
     """
     distribution_list = []
     if data_path[-1] != '/':
         data_path += '/'
     for name in os.listdir(data_path):
-        distribution_list.append({"category" : name.split('_', 1)[0],
+        category = name.split('_', 1)[0]
+
+        distribution_list.append({"category" : category,
                                   "name" : name,
                                   "size" : len(os.listdir(data_path + name))})
     return distribution_list
@@ -39,5 +43,5 @@ def display_distribution(dist_list : list) -> None:
         i += 1
     plt.show()
 
-l = get_distribution("/Users/theoke/Dev/leaffliction/images")
+l = get_distribution(IMAGES_PATH)
 display_distribution(l)
