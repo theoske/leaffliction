@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 import pathlib
 import argparse
 
+print(tf.config.list_physical_devices())
 
-def get_data(data_dir: str, test_dir: str = "../evaluation_images"):
+def get_data(data_dir: str, test_dir: str = "../test_images"):
     print(data_dir)
     data_dir = pathlib.Path(data_dir)
     image_count = len(list(data_dir.glob('*/*.jpg')))
     print(image_count)
-    train_data = tf.keras.utils.image_dataset_from_directory(
+    training_data = tf.keras.utils.image_dataset_from_directory(
         data_dir,
         validation_split=0.2,
         subset="training",
@@ -19,7 +20,7 @@ def get_data(data_dir: str, test_dir: str = "../evaluation_images"):
         batch_size=32,
         label_mode="categorical"
     )
-    eval_data = tf.keras.utils.image_dataset_from_directory(
+    validation_data = tf.keras.utils.image_dataset_from_directory(
         data_dir,
         validation_split=0.2,
         subset="validation",
@@ -28,16 +29,37 @@ def get_data(data_dir: str, test_dir: str = "../evaluation_images"):
         batch_size=32,
         label_mode="categorical"
     )
-    test_data = tf.keras.utils.image_dataset_from_directory(
+    training_d2 = tf.keras.utils.image_dataset_from_directory(
+        '../augmented_images',
+        validation_split=0.2,
+        subset="training",
+        seed=42,
+        image_size=(256, 256),
+        batch_size=32,
+        label_mode="categorical"
+    )
+    validation_d2 = tf.keras.utils.image_dataset_from_directory(
+        '../augmented_images',
+        validation_split=0.2,
+        subset="validation",
+        seed=42,
+        image_size=(256, 256),
+        batch_size=32,
+        label_mode="categorical"
+    )
+    class_names = training_data.class_names
+    training_data = training_data.concatenate(training_d2)
+    validation_data = validation_data.concatenate(validation_d2)
+    testing_data = tf.keras.utils.image_dataset_from_directory(
         test_dir,
         seed=42,
         image_size=(256, 256),
         batch_size=32,
         label_mode="categorical"
     )
-    class_names = train_data.class_names
+    
     print(class_names)
-    return train_data, eval_data, test_data
+    return training_data, validation_data, testing_data
 
 def display_training(history):
     plt.plot(history.history['accuracy'], label='Training Accuracy')
@@ -56,22 +78,44 @@ def display_training(history):
     plt.show()
 
 def train(data_dir: str):
-    train_data, eval_data, test_data = get_data(data_dir)
+    training_ds, validation_ds, testing_ds = get_data(data_dir)
     model = models.Sequential([
         layers.Rescaling(1./255, input_shape=(256, 256, 3)),
-        layers.Conv2D(32, (3, 3), activation='relu'),
-        layers.MaxPooling2D(pool_size=(2, 2)),
+        # Block 1
+        layers.Conv2D(16, 3, padding='same', activation='relu'),
+        layers.BatchNormalization(),
+        layers.MaxPooling2D(),
+        layers.Dropout(0.2),
+        # Block 2
+        layers.Conv2D(32, 3, padding='same', activation='relu'),
+        layers.BatchNormalization(),
+        layers.MaxPooling2D(),
+        layers.Dropout(0.2),
+        # Block 3
+        layers.Conv2D(64, 3, padding='same', activation='relu'),
+        layers.BatchNormalization(),
+        layers.MaxPooling2D(),
+        layers.Dropout(0.2),
+        # Block 4
+        layers.Conv2D(128, 3, padding='same', activation='relu'),
+        layers.BatchNormalization(),
+        layers.MaxPooling2D(),
+        layers.Dropout(0.2),
+        # Head
         layers.Flatten(),
         layers.Dense(128, activation='relu'),
+        layers.BatchNormalization(),
+        layers.Dropout(0.5),
         layers.Dense(8, activation='softmax')
     ])
     model.compile(
         optimizer='adam',
         loss='categorical_crossentropy',
-        metrics=['accuracy']
+        metrics=['accuracy'],
     )
-    history = model.fit(train_data, epochs=10, validation_data=eval_data)
-    test_loss, test_acc = model.evaluate(test_data)
+    early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+    history = model.fit(training_ds, epochs=10, validation_data=validation_ds, callbacks=[early_stop])
+    test_loss, test_acc = model.evaluate(testing_ds)
     print(f"Test accuracy: {test_acc * 100:.2f}%")
     model.save("model.keras", overwrite=True)
     display_training(history)
@@ -80,10 +124,11 @@ def train(data_dir: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("data_dir", nargs="?",
-                        help="Path to ds", default="../transformed_directory")
+                        help="Path to ds", default="../transformed_images")
     args = parser.parse_args()
     train(args.data_dir)
 
 
 if __name__ == "__main__":
     main()
+

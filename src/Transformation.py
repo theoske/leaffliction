@@ -1,7 +1,6 @@
 import os
 import shutil
 import argparse
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from glob import glob
@@ -36,28 +35,12 @@ def transform_mask(image: np.ndarray) -> np.ndarray:
 
 
 def transform_roi_objects(image: np.ndarray) -> np.ndarray:
-    """Show leaf region of interest: green overlay on leaf, blue bounding box."""
+    """Show leaf region of interest: masked leaf isolated from background."""
     mask = transform_mask(image)
     h, w = image.shape[:2]
-
-    roi = pcv.roi.rectangle(img=image, x=0, y=0, h=h, w=w)
-    filtered_mask = pcv.roi.filter(mask=mask, roi=roi, roi_type="largest")
-
-    gray_bg = cv2.cvtColor(
-        cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR
-    )
-    green_overlay = gray_bg.copy()
-    green_overlay[filtered_mask > 0] = (0, 255, 0)
-
-    contours, _ = cv2.findContours(
-        filtered_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
-    if contours:
-        largest = max(contours, key=cv2.contourArea)
-        x, y, bw, bh = cv2.boundingRect(largest)
-        cv2.rectangle(green_overlay, (x, y), (x + bw, y + bh), (255, 0, 0), 3)
-
-    return green_overlay
+    roi = pcv.roi.rectangle(img=image, x=0, y=0, w=w, h=h)
+    filtered_mask = pcv.roi.filter(mask=mask, roi=roi, roi_type='partial')
+    return pcv.apply_mask(img=image, mask=filtered_mask, mask_color='black')
 
 
 def transform_analyze_object(image: np.ndarray) -> np.ndarray:
@@ -85,10 +68,12 @@ def transform_pseudolandmarks(image: np.ndarray) -> np.ndarray:
         (center, (255, 0, 255)),
     ]
 
+    yy, xx = np.ogrid[0:result.shape[0], 0:result.shape[1]]
     for pts, color in groups:
         for pt in pts:
-            coord = (int(pt[0][0]), int(pt[0][1]))
-            cv2.circle(result, coord, 5, color, -1)
+            cx, cy = int(pt[0][0]), int(pt[0][1])
+            circle = (xx - cx) ** 2 + (yy - cy) ** 2 <= 25
+            result[circle] = color
 
     return result
 
@@ -104,7 +89,7 @@ TRANSFORM_DISPLAY = {
 
 def display_transformations(image_path: str):
     """Display all transformations for a single image using matplotlib."""
-    image = cv2.imread(image_path)
+    image, _, _ = pcv.readimage(filename=image_path)
     if image is None:
         return
 
@@ -113,18 +98,14 @@ def display_transformations(image_path: str):
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
     fig.canvas.manager.set_window_title("Transformation.py")
 
-    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    rgb = image[:, :, ::-1]
     transforms_to_show = [
         ("Original", rgb),
-        ("Gaussian blur", cv2.cvtColor(
-            transform_gaussian_blur(image), cv2.COLOR_BGR2RGB)),
+        ("Gaussian blur", transform_gaussian_blur(image)[:, :, ::-1]),
         ("Mask", transform_mask(image)),
-        ("ROI objects", cv2.cvtColor(
-            transform_roi_objects(image), cv2.COLOR_BGR2RGB)),
-        ("Analyze object", cv2.cvtColor(
-            transform_analyze_object(image), cv2.COLOR_BGR2RGB)),
-        ("Pseudolandmarks", cv2.cvtColor(
-            transform_pseudolandmarks(image), cv2.COLOR_BGR2RGB)),
+        ("ROI objects", transform_roi_objects(image)[:, :, ::-1]),
+        ("Analyze object", transform_analyze_object(image)[:, :, ::-1]),
+        ("Pseudolandmarks", transform_pseudolandmarks(image)[:, :, ::-1]),
     ]
 
     for ax, (title, img) in zip(axes.flat, transforms_to_show):
@@ -140,7 +121,7 @@ def display_transformations(image_path: str):
 
 def save_transform(image_path: str, transform_name: str, dst_dir: str):
     """Apply one transform to an image and save the result."""
-    image = cv2.imread(image_path)
+    image, _, _ = pcv.readimage(filename=image_path)
     if image is None:
         return
 
@@ -152,7 +133,7 @@ def save_transform(image_path: str, transform_name: str, dst_dir: str):
     _, func = TRANSFORM_DISPLAY[transform_name]
     result = func(image)
     out_path = os.path.join(dst_dir, f"{base}_{transform_name}{ext}")
-    cv2.imwrite(out_path, result)
+    pcv.print_image(img=result, filename=out_path)
 
     return out_path
 
@@ -183,12 +164,12 @@ def process_directory(src_dir: str, dst_dir: str, transform_name: str):
 def process_base_directory(base_dir: str):
     """Apply all transforms to all images in all subdirectories.
 
-    Creates a 'transformed_directory' sibling folder preserving
+    Creates a 'transformed_images' sibling folder preserving
     the full subdirectory structure of base_dir.
     """
     base_dir = os.path.abspath(base_dir)
     dst_base = os.path.join(os.path.dirname(base_dir),
-                            "transformed_directory")
+                            "transformed_images")
 
     if os.path.exists(dst_base):
         shutil.rmtree(dst_base)
@@ -215,7 +196,7 @@ def main():
                         help="Destination directory for batch output")
     parser.add_argument("-a", "--all",
                         help="Base folder: apply all transforms to all "
-                             "subdirectories and save to transformed_directory")
+                             "subdirectories and save to transformed_images")
 
     for tf in TRANSFORMS:
         flag = tf.replace("_", "-")
