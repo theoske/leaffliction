@@ -29,27 +29,7 @@ def get_data(data_dir: str, test_dir: str = "../test_images"):
         batch_size=32,
         label_mode="categorical"
     )
-    training_d2 = tf.keras.utils.image_dataset_from_directory(
-        '../augmented_images',
-        validation_split=0.2,
-        subset="training",
-        seed=42,
-        image_size=(256, 256),
-        batch_size=32,
-        label_mode="categorical"
-    )
-    validation_d2 = tf.keras.utils.image_dataset_from_directory(
-        '../augmented_images',
-        validation_split=0.2,
-        subset="validation",
-        seed=42,
-        image_size=(256, 256),
-        batch_size=32,
-        label_mode="categorical"
-    )
     class_names = training_data.class_names
-    training_data = training_data.concatenate(training_d2)
-    validation_data = validation_data.concatenate(validation_d2)
     testing_data = tf.keras.utils.image_dataset_from_directory(
         test_dir,
         seed=42,
@@ -57,7 +37,6 @@ def get_data(data_dir: str, test_dir: str = "../test_images"):
         batch_size=32,
         label_mode="categorical"
     )
-    
     print(class_names)
     return training_data, validation_data, testing_data
 
@@ -114,7 +93,7 @@ def train(data_dir: str):
         metrics=['accuracy'],
     )
     early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-    history = model.fit(training_ds, epochs=10, validation_data=validation_ds, callbacks=[early_stop])
+    history = model.fit(training_ds, epochs=5, validation_data=validation_ds, callbacks=[early_stop])
     test_loss, test_acc = model.evaluate(testing_ds)
     print(f"Test accuracy: {test_acc * 100:.2f}%")
     model.save("model.keras", overwrite=True)
