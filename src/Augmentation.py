@@ -137,84 +137,60 @@ def select_categories_to_augment(data_path: str = IMAGES_PATH):
     return to_augment
 
 
-def split_evaluation(data_path: str, eval_ratio: float = 0.2,
-                     min_eval: int = 100, seed: int = 42):
+def split_test(data_path: str, test_ratio: float = 0.2,
+                     min_test: int = 100, seed: int = 42):
     """
-    Move eval_ratio of images from each category into an
-    'evaluation_images' folder (sibling of data_path).
-    Returns the path to the evaluation directory.
+    Move test_ratio of images from each category into an
+    'test_images' folder (sibling of data_path).
+    Returns the path to the test directory.
     """
-    eval_path = os.path.join(os.path.dirname(data_path),
-                             "evaluation_images")
-    if os.path.exists(eval_path):
-        shutil.rmtree(eval_path)
-
-    extensions = ("*.JPG", "*.jpg", "*.png", "*.PNG", "*.jpeg", "*.JPEG")
+    test_path = os.path.join(os.path.dirname(data_path), "test_images")
+    if os.path.exists(test_path):
+        shutil.rmtree(test_path)
     rng = random.Random(seed)
-
     for category in sorted(os.listdir(data_path)):
         cat_dir = os.path.join(data_path, category)
         if not os.path.isdir(cat_dir):
             continue
-
-        images = []
-        for ext in extensions:
-            images.extend(glob(os.path.join(cat_dir, ext)))
+        images = glob(os.path.join(cat_dir, "*.JPG"))
         if not images:
             continue
-
         images.sort()
-        n_eval = max(min_eval, int(len(images) * eval_ratio))
+        n_test = max(min_test, int(len(images) * test_ratio))
         rng.shuffle(images)
-        eval_images = images[:n_eval]
-
-        eval_cat_dir = os.path.join(eval_path, category)
-        os.makedirs(eval_cat_dir, exist_ok=True)
-
-        for img_path in eval_images:
-            shutil.move(img_path, eval_cat_dir)
-
-        print(f"{category}: {n_eval}/{len(images)} images -> evaluation")
-
-    print(f"\nEvaluation set saved to: {eval_path}\n")
-    return eval_path
+        test_images = images[:n_test]
+        test_cat_dir = os.path.join(test_path, category)
+        os.makedirs(test_cat_dir, exist_ok=True)
+        for img_path in test_images:
+            shutil.move(img_path, test_cat_dir)
+        print(f"{category}: {n_test}/{len(images)} images -> test")
+    print(f"\ntest set saved to: {test_path}\n")
+    return test_path
 
 
 def balance_dataset(data_path: str = IMAGES_PATH,
                     output_path: str = None):
     """
-    Copy the dataset to augmented_directory, split 20% of each category
-    into evaluation_images, then augment under-represented categories
+    Copy the dataset to augmented_images, split 20% of each category
+    into test_images, then augment under-represented categories
     to balance the training set.
     """
     if output_path is None:
-        output_path = os.path.join(os.path.dirname(data_path),
-                                   "augmented_directory")
-
+        output_path = os.path.join(os.path.dirname(data_path), "augmented_images")
     if os.path.exists(output_path):
         shutil.rmtree(output_path)
     shutil.copytree(data_path, output_path)
     print(f"Copied dataset to {output_path}")
-
-    split_evaluation(output_path)
-
+    split_test(output_path)
     to_augment = select_categories_to_augment(output_path)
-
     if not to_augment:
         print("Dataset is already balanced.")
         return
-
-    extensions = ("*.JPG", "*.jpg", "*.png", "*.PNG", "*.jpeg", "*.JPEG")
-
     for name, current_size, target_size in to_augment:
         dir_path = os.path.join(output_path, name)
-        images = []
-        for ext in extensions:
-            images.extend(glob(os.path.join(dir_path, ext)))
-
+        images = glob(os.path.join(dir_path, "*.JPG"))
         if not images:
             continue
-
         needed = target_size - current_size
         generated = 0
         flipped = set()
@@ -238,9 +214,7 @@ def balance_dataset(data_path: str = IMAGES_PATH,
                                     f"{base}_aug{generated}_{tf_name}{ext_out}")
             cv2.imwrite(out_path, augmented)
             generated += 1
-
         print(f"{name}: +{generated} images ({current_size} -> {target_size})")
-
     print(f"\nBalanced dataset saved to: {output_path}")
 
 
@@ -256,9 +230,7 @@ def main():
                              "under-represented categories")
     parser.add_argument("-o", "--output",
                         help="Output directory")
-
     args = parser.parse_args()
-
     if args.balance:
         balance_dataset(IMAGES_PATH, args.output)
     elif args.image:
@@ -272,4 +244,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

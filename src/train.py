@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import pathlib
 import argparse
 
+from Augmentation import *
+from Transformation import *
+
 print(tf.config.list_physical_devices())
 
 def get_data(data_dir: str, test_dir: str = "../test_images"):
@@ -55,6 +58,16 @@ def display_training(history):
     plt.ylabel('Loss')
     plt.legend(loc='upper right')
     plt.show()
+
+def prepare_ds():
+    """
+    calls augmentation and transformation for them to create :
+        - augmented_images/
+        - test_images/
+        - transformed_images/
+    """
+    balance_dataset("../images/")
+    process_base_directory("../augmented_images")
 
 def train(data_dir: str):
     training_ds, validation_ds, testing_ds = get_data(data_dir)
