@@ -3,6 +3,8 @@ from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
 import pathlib
 import argparse
+from shutil import make_archive, rmtree
+import os
 
 from Augmentation import *
 from Transformation import *
@@ -59,21 +61,38 @@ def display_training(history):
     plt.legend(loc='upper right')
     plt.show()
 
-def prepare_ds():
+def prepare_ds(base_img: str):
     """
     calls augmentation and transformation for them to create :
         - augmented_images/
         - test_images/
         - transformed_images/
     """
-    base_img = "../images/"
+    if os.path.exists("../newdata"):
+        print("WARNING: deleting ../newdata folder to replace it.")
+        rmtree("../newdata")
+    test_img = "../newdata/test"
     aug_img = "../newdata/augmented_images"
     trans_img = "../newdata/transformed_images"
-    balance_dataset(base_img, aug_img)
+    balance_dataset(base_img, aug_img, test_path=test_img)
     process_base_directory(aug_img, trans_img)
+    return trans_img
+
+def archive_training(data_path: str = "../newdata", model_path: str = "model.keras", dst: str = "archive"):
+    if not os.path.exists(data_path):
+        print(f"ERROR: can't zip unexistant folder {data_path}")
+        return
+    if not os.path.exists(model_path):
+        print(f"ERROR: can't zip unexistant model {model_path}")
+        return
+    if os.path.exists(dst+".zip"):
+        print(f"WARNING: {dst}.zip folder already exists. Deleting it...")
+        os.remove(dst+".zip")
+    shutil.copy(model_path, data_path)
+    make_archive(dst, "zip", data_path)
 
 def train(data_dir: str):
-    prepare_ds()
+    data_dir = prepare_ds(data_dir)
     training_ds, validation_ds, testing_ds = get_data(data_dir)
     model = models.Sequential([
         layers.Rescaling(1./255, input_shape=(256, 256, 3)),
@@ -110,16 +129,17 @@ def train(data_dir: str):
         metrics=['accuracy'],
     )
     early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-    history = model.fit(training_ds, epochs=5, validation_data=validation_ds, callbacks=[early_stop])
+    history = model.fit(training_ds, epochs=1, validation_data=validation_ds, callbacks=[early_stop])
     test_loss, test_acc = model.evaluate(testing_ds)
     print(f"Test accuracy: {test_acc * 100:.2f}%")
     model.save("model.keras", overwrite=True)
+    archive_training("../newdata")
     display_training(history)
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("data_dir", nargs="?",
-                        help="Path to ds", default="../transformed_images")
+                        help="Path to ds", default="../images")
     args = parser.parse_args()
     train(args.data_dir)
 

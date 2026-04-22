@@ -13,6 +13,9 @@ def get_distribution(data_path : str) -> dict:
     if data_path[-1] != '/':
         data_path += '/'
     for name in os.listdir(data_path):
+        if name[0] == '.':
+            print(f"WARNING: skipped file \'{name}\'")
+            continue
         category = name.split('_', 1)[0]
         size = len(os.listdir(data_path + name))
         if category not in distrib_d:

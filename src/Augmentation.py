@@ -121,30 +121,28 @@ def augment_image(image_path: str, output_dir: str = None):
 def select_categories_to_augment(data_path: str = IMAGES_PATH):
     """Find under-represented categories and return them with target size."""
     distrib = get_distribution(data_path)
-
     max_size = 0
     for category in distrib:
         for d in distrib[category]:
             if d["size"] > max_size:
                 max_size = d["size"]
-
     to_augment = []
     for category in distrib:
         for d in distrib[category]:
             if d["size"] < max_size:
                 to_augment.append((d["name"], d["size"], max_size))
-
     return to_augment
 
 
 def split_test(data_path: str, test_ratio: float = 0.2,
-                     min_test: int = 100, seed: int = 42):
+                     min_test: int = 100, seed: int = 42, test_path: str = "test_images"):
     """
     Move test_ratio of images from each category into an
     'test_images' folder (sibling of data_path).
     Returns the path to the test directory.
     """
-    test_path = os.path.join(os.path.dirname(data_path), "test_images")
+    test_path = os.path.join(os.path.dirname(data_path), test_path)
+    print(test_path)
     if os.path.exists(test_path):
         shutil.rmtree(test_path)
     rng = random.Random(seed)
@@ -169,7 +167,7 @@ def split_test(data_path: str, test_ratio: float = 0.2,
 
 
 def balance_dataset(data_path: str = IMAGES_PATH,
-                    dst: str = None):
+                    dst: str = None, test_path: str = "test_images"):
     """
     Copy the dataset to augmented_images, split 20% of each category
     into test_images, then augment under-represented categories
@@ -181,7 +179,7 @@ def balance_dataset(data_path: str = IMAGES_PATH,
         shutil.rmtree(dst)
     shutil.copytree(data_path, dst)
     print(f"Copied dataset to {dst}")
-    split_test(dst)
+    split_test(dst, test_path=test_path)
     to_augment = select_categories_to_augment(dst)
     if not to_augment:
         print("Dataset is already balanced.")
