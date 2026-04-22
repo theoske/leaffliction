@@ -66,10 +66,14 @@ def prepare_ds():
         - test_images/
         - transformed_images/
     """
-    balance_dataset("../images/")
-    process_base_directory("../augmented_images")
+    base_img = "../images/"
+    aug_img = "../newdata/augmented_images"
+    trans_img = "../newdata/transformed_images"
+    balance_dataset(base_img, aug_img)
+    process_base_directory(aug_img, trans_img)
 
 def train(data_dir: str):
+    prepare_ds()
     training_ds, validation_ds, testing_ds = get_data(data_dir)
     model = models.Sequential([
         layers.Rescaling(1./255, input_shape=(256, 256, 3)),
@@ -112,7 +116,6 @@ def train(data_dir: str):
     model.save("model.keras", overwrite=True)
     display_training(history)
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("data_dir", nargs="?",
@@ -120,7 +123,5 @@ def main():
     args = parser.parse_args()
     train(args.data_dir)
 
-
 if __name__ == "__main__":
     main()
-

@@ -134,14 +134,14 @@ def process_directory(src_dir: str, dst_dir: str, transform_name: str):
     print(f"Processed {len(images)} images -> {dst_dir}")
 
 
-def process_base_directory(base_dir: str):
+def process_base_directory(base_dir: str, dst_dir: str = "transformed_images"):
     """Apply all transforms to all images in all subdirectories.
 
     Creates a 'transformed_images' sibling folder preserving
     the full subdirectory structure of base_dir.
     """
     base_dir = os.path.abspath(base_dir)
-    dst_base = os.path.join(os.path.dirname(base_dir), "transformed_images")
+    dst_base = os.path.join(os.path.dirname(base_dir), dst_dir)
     if os.path.exists(dst_base):
         shutil.rmtree(dst_base)
     for dirpath, _, _ in sorted(os.walk(base_dir)):

@@ -169,25 +169,25 @@ def split_test(data_path: str, test_ratio: float = 0.2,
 
 
 def balance_dataset(data_path: str = IMAGES_PATH,
-                    output_path: str = None):
+                    dst: str = None):
     """
     Copy the dataset to augmented_images, split 20% of each category
     into test_images, then augment under-represented categories
     to balance the training set.
     """
-    if output_path is None:
-        output_path = os.path.join(os.path.dirname(data_path), "augmented_images")
-    if os.path.exists(output_path):
-        shutil.rmtree(output_path)
-    shutil.copytree(data_path, output_path)
-    print(f"Copied dataset to {output_path}")
-    split_test(output_path)
-    to_augment = select_categories_to_augment(output_path)
+    if dst is None:
+        dst = os.path.join(os.path.dirname(data_path), "augmented_images")
+    if os.path.exists(dst):
+        shutil.rmtree(dst)
+    shutil.copytree(data_path, dst)
+    print(f"Copied dataset to {dst}")
+    split_test(dst)
+    to_augment = select_categories_to_augment(dst)
     if not to_augment:
         print("Dataset is already balanced.")
         return
     for name, current_size, target_size in to_augment:
-        dir_path = os.path.join(output_path, name)
+        dir_path = os.path.join(dst, name)
         images = glob(os.path.join(dir_path, "*.JPG"))
         if not images:
             continue
@@ -215,7 +215,7 @@ def balance_dataset(data_path: str = IMAGES_PATH,
             cv2.imwrite(out_path, augmented)
             generated += 1
         print(f"{name}: +{generated} images ({current_size} -> {target_size})")
-    print(f"\nBalanced dataset saved to: {output_path}")
+    print(f"\nBalanced dataset saved to: {dst}")
 
 
 def main():
