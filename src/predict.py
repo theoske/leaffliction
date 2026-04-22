@@ -1,100 +1,79 @@
-import tensorflow as tf
-from tensorflow.keras import layers, models
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import pathlib
 import argparse
-import re
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
 
 
-CLASS_NAMES = [
-    "Apple_Black_rot",
-    "Apple_healthy",
-    "Apple_rust",
-    "Apple_scab",
-    "Grape_Black_rot",
-    "Grape_Esca",
-    "Grape_healthy",
-    "Grape_spot"
-]
+def load_and_preprocess_image(img_path):
+    """Load and preprocess an image for prediction."""
+    img = image.load_img(img_path, target_size=(256, 256))
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)
+    return img, img_array
 
-ORIGINAL_IMAGES_DIR = pathlib.Path("../images")
+def get_pure_img(base_img_path: str):
+    if not os.path.exists("../images"):
+        print("no ../images folder")
+        return None
+    #gets only the file without the parent folders
+    filename = base_img_path.split('/')[-1]
+    foldername = base_img_path.split('/')[-2]
+    #get the base filename without the modifiers
+    pure = filename.split('_')[0]
+    if ".JPG" not in pure:
+        pure += ".JPG"
+    pure_path = f"../images/{foldername}/{pure}"
+    if not os.path.exists(pure_path):
+        print(f"../images/{pure} does not exist")
+        return None
+    pure_img = image.load_img(pure_path, target_size=(256, 256))
+    return pure_img
+    
 
-
-def find_original_image(variant_path: pathlib.Path) -> pathlib.Path:
-    match = re.match(r"image\s+\((\d+)\)_(.+)\.JPG", variant_path.name, re.IGNORECASE)
-    if not match:
-        match = re.match(r"image\s+\((\d+)\)_(.+)", variant_path.name, re.IGNORECASE)
-    if match:
-        number = match.group(1)
-        class_name = variant_path.parent.name
-        original_name = f"image ({number}).JPG"
-        original_path = ORIGINAL_IMAGES_DIR / class_name / original_name
-        if original_path.exists():
-            return original_path
-        test_path = pathlib.Path("../test_images") / class_name / original_name
-        if test_path.exists():
-            return test_path
-    return None
-
-
-def predict(model_path: str, image_path: str):
-    model_file = pathlib.Path(model_path)
-    if not model_file.exists():
-        print(f"ERROR: model {model_path} doesn't exist.")
-        return
-    image_file = pathlib.Path(image_path)
-    if not image_file.exists():
-        print(f"ERROR: image {image_path} doesn't exist.")
-        print(f"Hint: Use quotes around the path: \"{image_path}\" or escape parentheses: image\(\d+\).JPG")
-        return
-    model = tf.keras.models.load_model(model_path)
-    img = tf.keras.utils.load_img(image_path, target_size=(256, 256))
-    img_array = tf.keras.utils.img_to_array(img)
-    img_array = tf.expand_dims(img_array, 0)
+def predict_and_display(model_path, img_path):
+    """Load model, predict, and display result."""
+    # Load the model
+    model = load_model(model_path)
+    print(f"Model loaded from {model_path}")
+    # Load and preprocess the image
+    img, img_array = load_and_preprocess_image(img_path)
+    print(f"Image loaded from {img_path}")
+    # Make prediction
+    class_names = [
+        "Apple_Black_rot",
+        "Apple_healthy",
+        "Apple_rust",
+        "Apple_scab",
+        "Grape_Black_rot",
+        "Grape_Esca",
+        "Grape_healthy",
+        "Grape_spot"
+    ]
     predictions = model.predict(img_array)
-    predicted_class_idx = tf.argmax(predictions[0]).numpy()
-    predicted_class = CLASS_NAMES[predicted_class_idx]
-    confidence = tf.reduce_max(predictions[0]).numpy()
-    print(f"Predicted class: {predicted_class}")
-    is_correct = predicted_class == image_file.parent.name
-    bg_color = 'lightgreen' if is_correct else 'lightcoral'
-    original_path = find_original_image(image_file)
-    if original_path:
-        fig, axes = plt.subplots(1, 2, figsize=(16, 8))
-    else:
-        fig, axes = plt.subplots(1, 1, figsize=(8, 8))
-    fig.patch.set_facecolor(bg_color)
-    if original_path:
-        original_img = mpimg.imread(original_path)
-        axes[0].imshow(original_img)
-        axes[0].set_title(f"{original_path.parent.name}/{original_path.name}", fontsize=16)
-        axes[0].axis('off')
-        variant_img = mpimg.imread(image_file)
-        axes[1].imshow(variant_img)
-        axes[1].set_title(f"{image_file.parent.name}/{image_file.name}", fontsize=16)
-        axes[1].axis('off')
-        fig.text(0.5, 0.01, f"Predicted: {predicted_class}",
-                 ha='center', fontsize=14, fontweight='bold')
-    else:
-        img_display = mpimg.imread(image_file)
-        axes.imshow(img_display)
-        axes.set_title(f"{image_file.parent.name}/{image_file.name}", fontsize=16)
-        axes.axis('off')
-        fig.text(0.5, 0.01, f"Predicted: {predicted_class}",
-                 ha='center', fontsize=14, fontweight='bold')
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    predicted_class = class_names[np.argmax(predictions[0])]
+    confidence = np.max(predictions[0])
+    pure_img = get_pure_img(img_path)
+    plt.figure(figsize=(10, 5))
+    if pure_img is not None:
+        plt.subplot(1, 2, 1)
+        plt.imshow(pure_img)
+        plt.axis('off')
+        plt.title("Pure Image")
+        plt.subplot(1, 2, 2 if pure_img is not None else 1)
+    plt.imshow(img)
+    plt.axis('off')
+    plt.title(f"Predicted: Class {predicted_class} (Confidence: {confidence:.2f})")
+    plt.tight_layout()
     plt.show()
-    return predicted_class, confidence
-
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("model_path", help="Path to model.keras file")
-    parser.add_argument("image_path", help="Path to image file")
+    parser = argparse.ArgumentParser(description="Make a prediction using a Keras model.")
+    parser.add_argument("model_path", type=str, help="Path to the .keras model file")
+    parser.add_argument("image_path", type=str, help="Path to the image file")
     args = parser.parse_args()
-    predict(args.model_path, args.image_path)
-
+    predict_and_display(args.model_path, args.image_path)
 
 if __name__ == "__main__":
     main()

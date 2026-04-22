@@ -129,7 +129,7 @@ def train(data_dir: str):
         metrics=['accuracy'],
     )
     early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-    history = model.fit(training_ds, epochs=1, validation_data=validation_ds, callbacks=[early_stop])
+    history = model.fit(training_ds, epochs=10, validation_data=validation_ds, callbacks=[early_stop])
     test_loss, test_acc = model.evaluate(testing_ds)
     print(f"Test accuracy: {test_acc * 100:.2f}%")
     model.save("model.keras", overwrite=True)
