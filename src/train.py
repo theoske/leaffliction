@@ -11,7 +11,7 @@ from Transformation import *
 
 print(tf.config.list_physical_devices())
 
-def get_data(data_dir: str, test_dir: str = "../test_images"):
+def get_data(data_dir: str, test_dir: str = "../newdata/test"):
     print(data_dir)
     data_dir = pathlib.Path(data_dir)
     image_count = len(list(data_dir.glob('*/*.jpg')))
