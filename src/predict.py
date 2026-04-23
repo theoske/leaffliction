@@ -55,7 +55,7 @@ def predict_and_display(model_path, img_path):
     predicted_class = class_names[np.argmax(predictions[0])]
     confidence = np.max(predictions[0])
     pure_img = get_pure_img(img_path)
-    plt.figure(figsize=(10, 5))
+    plt.figure(figsize=(10, 5), num=f"Prediction for {img_path.split('/')[-2]}/{img_path.split('/')[-1]}")
     if pure_img is not None:
         plt.subplot(1, 2, 1)
         plt.imshow(pure_img)
