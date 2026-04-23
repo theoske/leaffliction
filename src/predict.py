@@ -8,7 +8,11 @@ from tensorflow.keras.preprocessing import image
 
 def load_and_preprocess_image(img_path):
     """Load and preprocess an image for prediction."""
-    img = image.load_img(img_path, target_size=(256, 256))
+    try:
+        img = image.load_img(img_path, target_size=(256, 256))
+    except Exception as e:
+        print(f"ERROR: {e}")
+        exit(-1)
     img_array = image.img_to_array(img)
     img_array = np.expand_dims(img_array, axis=0)
     return img, img_array
