@@ -6,7 +6,6 @@ import numpy as np
 import cv2
 from glob import glob
 from Distribution import get_distribution
-from global_var import *
 
 
 def apply_flip(image: np.ndarray) -> np.ndarray:
@@ -118,7 +117,7 @@ def augment_image(image_path: str, output_dir: str = None):
     return saved
 
 
-def select_categories_to_augment(data_path: str = IMAGES_PATH):
+def select_categories_to_augment(data_path: str):
     """Find under-represented categories and return them with target size."""
     distrib = get_distribution(data_path)
     max_size = 0
@@ -166,13 +165,15 @@ def split_test(data_path: str, test_ratio: float = 0.2,
     return test_path
 
 
-def balance_dataset(data_path: str = IMAGES_PATH,
-                    dst: str = None, test_path: str = "test_images"):
+def balance_dataset(data_path: str, dst: str = None, test_path: str = "test_images"):
     """
     Copy the dataset to augmented_images, split 20% of each category
     into test_images, then augment under-represented categories
     to balance the training set.
     """
+    if not os.path.isdir(data_path):
+        print(f"ERROR: \'{data_path}\' folder does not exist.")
+        exit(1)
     if dst is None:
         dst = os.path.join(os.path.dirname(data_path), "augmented_images")
     if os.path.exists(dst):
@@ -223,14 +224,14 @@ def main():
     )
     parser.add_argument("image", nargs="?",
                         help="Path to an image to augment")
-    parser.add_argument("-b", "--balance", action="store_true",
+    parser.add_argument("-b", "--balance", action="store", type=str,
                         help="Balance the dataset by augmenting "
                              "under-represented categories")
     parser.add_argument("-o", "--output",
                         help="Output directory")
     args = parser.parse_args()
     if args.balance:
-        balance_dataset(IMAGES_PATH, args.output)
+        balance_dataset(args.balance, args.output)
     elif args.image:
         print(f"Augmenting: {args.image}")
         saved = augment_image(args.image, args.output)
