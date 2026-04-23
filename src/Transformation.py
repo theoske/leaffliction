@@ -144,7 +144,6 @@ def process_directory(src_dir: str, dst_dir: str, transform_name: str):
     if not images:
         return
     for img_path in images:
-        print(img_path)
         out = save_transform(img_path, transform_name, dst_dir)
     print(f"Processed {len(images)} images -> {dst_dir}")
 

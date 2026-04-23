@@ -112,7 +112,6 @@ def augment_image(image_path: str, output_dir: str = None):
         out_path = os.path.join(output_dir, f"{base}_{name}{ext}")
         cv2.imwrite(out_path, augmented)
         saved.append(out_path)
-        print(f"  {base}_{name}{ext}")
 
     return saved
 

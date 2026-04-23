@@ -35,7 +35,11 @@ def get_pure_img(base_img_path: str):
 def predict_and_display(model_path, img_path):
     """Load model, predict, and display result."""
     # Load the model
-    model = load_model(model_path)
+    try :
+        model = load_model(model_path)
+    except ValueError as e:
+        print(f"ERROR : {e}")
+        exit(-1)
     print(f"Model loaded from {model_path}")
     # Load and preprocess the image
     img, img_array = load_and_preprocess_image(img_path)

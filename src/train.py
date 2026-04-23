@@ -12,10 +12,16 @@ from Transformation import *
 print(tf.config.list_physical_devices())
 
 def get_data(data_dir: str, test_dir: str = "../newdata/test"):
+    if not os.path.isdir(data_dir):
+        print(f"ERROR: No data for training.")
+        exit(-1)
     print(data_dir)
     data_dir = pathlib.Path(data_dir)
     image_count = len(list(data_dir.glob('*/*.jpg')))
     print(image_count)
+    if image_count < 1:
+        print(f"ERROR: No data for training.")
+        exit(-1)
     training_data = tf.keras.utils.image_dataset_from_directory(
         data_dir,
         validation_split=0.2,
@@ -68,10 +74,13 @@ def prepare_ds(base_img: str):
         - test_images/
         - transformed_images/
     """
+    if not os.path.isdir(base_img):
+        print(f"ERROR: \'{base_img}\' is not a directory.")
+        exit(-1)
     if os.path.exists("../newdata"):
         print("WARNING: deleting ../newdata folder to replace it.")
         rmtree("../newdata")
-    test_img = "../newdata/test"
+    test_img = "test"
     aug_img = "../newdata/augmented_images"
     trans_img = "../newdata/transformed_images"
     balance_dataset(base_img, aug_img, test_path=test_img)
