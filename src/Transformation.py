@@ -78,6 +78,9 @@ TRANSFORM_DISPLAY = {
 
 
 def display_transformations(image_path: str):
+    if not os.path.isfile(image_path):
+        print(f"ERROR: \'{image_path}\' is not a file.")
+        exit(-1)
     image, _, _ = pcv.readimage(filename=image_path)
     if image is None:
         return
@@ -105,14 +108,22 @@ def display_transformations(image_path: str):
 
 def save_transform(image_path: str, transform_name: str, dst_dir: str):
     """Apply one transform to an image and save the result."""
-    image, _, _ = pcv.readimage(filename=image_path)
+    try:
+        image, _, _ = pcv.readimage(filename=image_path)
+    except RuntimeError as e:
+        print(f"ERROR: {e}")
+        return
     if image is None:
         return
     pcv.params.debug = None
     base = os.path.splitext(os.path.basename(image_path))[0]
     ext = os.path.splitext(image_path)[1]
     _, func = TRANSFORM_DISPLAY[transform_name]
-    result = func(image)
+    try:
+        result = func(image)
+    except Exception:
+        print(f"ERROR: file \'{image_path}\' is corrupted.")
+        return
     out_path = os.path.join(dst_dir, f"{base}_{transform_name}{ext}")
     pcv.print_image(img=result, filename=out_path)
     return out_path
@@ -125,11 +136,15 @@ def process_directory(src_dir: str, dst_dir: str, transform_name: str):
     (e.g. "*.JPG"), expanding matches, and extending the images list across
     all supported extensions.
     """
+    if not os.path.isdir(src_dir):
+        print(f"ERROR: \'{src_dir}\' is not a directory.")
+        exit(-1)
     os.makedirs(dst_dir, exist_ok=True)
     images = glob(os.path.join(src_dir, "*.JPG"))
     if not images:
         return
     for img_path in images:
+        print(img_path)
         out = save_transform(img_path, transform_name, dst_dir)
     print(f"Processed {len(images)} images -> {dst_dir}")
 
@@ -140,6 +155,9 @@ def process_base_directory(base_dir: str, dst_dir: str = "transformed_images"):
     Creates a 'transformed_images' sibling folder preserving
     the full subdirectory structure of base_dir.
     """
+    if not os.path.isdir(base_dir):
+        print(f"ERROR: \'{base_dir}\' is not a directory.")
+        exit(-1)
     base_dir = os.path.abspath(base_dir)
     dst_base = os.path.join(os.path.dirname(base_dir), dst_dir)
     if os.path.exists(dst_base):
