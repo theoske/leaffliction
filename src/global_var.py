@@ -1,1 +1,0 @@
-IMAGES_PATH = "/Users/theoke/Dev/leaffliction/images"
