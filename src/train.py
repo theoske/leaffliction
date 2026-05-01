@@ -3,24 +3,25 @@ from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
 import pathlib
 import argparse
-from shutil import make_archive, rmtree
+from shutil import make_archive, rmtree, copy
 import os
 
-from Augmentation import *
-from Transformation import *
+from Augmentation import balance_dataset
+from Transformation import process_base_directory
 
 print(tf.config.list_physical_devices())
 
+
 def get_data(data_dir: str, test_dir: str = "../newdata/test"):
     if not os.path.isdir(data_dir):
-        print(f"ERROR: No data for training.")
+        print("ERROR: No data for training.")
         exit(-1)
     print(data_dir)
     data_dir = pathlib.Path(data_dir)
     image_count = len(list(data_dir.glob('*/*.jpg')))
     print(image_count)
     if image_count < 1:
-        print(f"ERROR: No data for training.")
+        print("ERROR: No data for training.")
         exit(-1)
     training_data = tf.keras.utils.image_dataset_from_directory(
         data_dir,
@@ -51,6 +52,7 @@ def get_data(data_dir: str, test_dir: str = "../newdata/test"):
     print(class_names)
     return training_data, validation_data, testing_data
 
+
 def display_training(history):
     plt.plot(history.history['accuracy'], label='Training Accuracy')
     plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
@@ -66,6 +68,7 @@ def display_training(history):
     plt.ylabel('Loss')
     plt.legend(loc='upper right')
     plt.show()
+
 
 def prepare_ds(base_img: str):
     """
@@ -87,7 +90,9 @@ def prepare_ds(base_img: str):
     process_base_directory(aug_img, trans_img)
     return trans_img
 
-def archive_training(data_path: str = "../newdata", model_path: str = "model.keras", dst: str = "archive"):
+
+def archive_training(data_path: str = "../newdata",
+                     model_path: str = "model.keras", dst: str = "archive"):
     if not os.path.exists(data_path):
         print(f"ERROR: can't zip unexistant folder {data_path}")
         return
@@ -97,8 +102,9 @@ def archive_training(data_path: str = "../newdata", model_path: str = "model.ker
     if os.path.exists(dst+".zip"):
         print(f"WARNING: {dst}.zip folder already exists. Deleting it...")
         os.remove(dst+".zip")
-    shutil.copy(model_path, data_path)
+    copy(model_path, data_path)
     make_archive(dst, "zip", data_path)
+
 
 def train(data_dir: str):
     data_dir = prepare_ds(data_dir)
@@ -137,13 +143,17 @@ def train(data_dir: str):
         loss='categorical_crossentropy',
         metrics=['accuracy'],
     )
-    early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
-    history = model.fit(training_ds, epochs=10, validation_data=validation_ds, callbacks=[early_stop])
+    early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                  patience=5,
+                                                  restore_best_weights=True)
+    history = model.fit(training_ds, epochs=10, validation_data=validation_ds,
+                        callbacks=[early_stop])
     test_loss, test_acc = model.evaluate(testing_ds)
     print(f"Test accuracy: {test_acc * 100:.2f}%")
     model.save("model.keras", overwrite=True)
     archive_training("../newdata")
     display_training(history)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -151,6 +161,7 @@ def main():
                         help="Path to ds", default="../images")
     args = parser.parse_args()
     train(args.data_dir)
+
 
 if __name__ == "__main__":
     main()

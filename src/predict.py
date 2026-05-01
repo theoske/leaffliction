@@ -17,14 +17,15 @@ def load_and_preprocess_image(img_path):
     img_array = np.expand_dims(img_array, axis=0)
     return img, img_array
 
+
 def get_pure_img(base_img_path: str):
     if not os.path.exists("../images"):
         print("no ../images folder")
         return None
-    #gets only the file without the parent folders
+    # gets only the file without the parent folders
     filename = base_img_path.split('/')[-1]
     foldername = base_img_path.split('/')[-2]
-    #get the base filename without the modifiers
+    # get the base filename without the modifiers
     pure = filename.split('_')[0]
     if ".JPG" not in pure:
         pure += ".JPG"
@@ -34,12 +35,12 @@ def get_pure_img(base_img_path: str):
         return None
     pure_img = image.load_img(pure_path, target_size=(256, 256))
     return pure_img
-    
+
 
 def predict_and_display(model_path, img_path):
     """Load model, predict, and display result."""
     # Load the model
-    try :
+    try:
         model = load_model(model_path)
     except ValueError as e:
         print(f"ERROR : {e}")
@@ -63,7 +64,8 @@ def predict_and_display(model_path, img_path):
     predicted_class = class_names[np.argmax(predictions[0])]
     confidence = np.max(predictions[0])
     pure_img = get_pure_img(img_path)
-    plt.figure(figsize=(10, 5), num=f"Prediction for {img_path.split('/')[-2]}/{img_path.split('/')[-1]}")
+    plt.figure(figsize=(10, 5), num=f"Prediction for {img_path.split('/')[-2]}\
+               /{img_path.split('/')[-1]}")
     if pure_img is not None:
         plt.subplot(1, 2, 1)
         plt.imshow(pure_img)
@@ -72,16 +74,21 @@ def predict_and_display(model_path, img_path):
         plt.subplot(1, 2, 2 if pure_img is not None else 1)
     plt.imshow(img)
     plt.axis('off')
-    plt.title(f"Predicted: Class {predicted_class} (Confidence: {confidence:.2f})")
+    plt.title(f"Predicted: Class {predicted_class} (Confidence: \
+              {confidence:.2f})")
     plt.tight_layout()
     plt.show()
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Make a prediction using a Keras model.")
-    parser.add_argument("model_path", type=str, help="Path to the .keras model file")
+    parser = argparse.ArgumentParser(description="Make a prediction using a \
+                                     Keras model.")
+    parser.add_argument("model_path", type=str, help="Path to the .keras \
+                        model file")
     parser.add_argument("image_path", type=str, help="Path to the image file")
     args = parser.parse_args()
     predict_and_display(args.model_path, args.image_path)
+
 
 if __name__ == "__main__":
     main()

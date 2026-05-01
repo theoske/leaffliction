@@ -36,7 +36,8 @@ def apply_skew(image: np.ndarray) -> np.ndarray:
     dst = np.float32([
         [np.random.randint(0, margin_x), np.random.randint(0, margin_y)],
         [w - np.random.randint(0, margin_x), np.random.randint(0, margin_y)],
-        [w - np.random.randint(0, margin_x), h - np.random.randint(0, margin_y)],
+        [w - np.random.randint(0, margin_x),
+         h - np.random.randint(0, margin_y)],
         [np.random.randint(0, margin_x), h - np.random.randint(0, margin_y)],
     ])
     M = cv2.getPerspectiveTransform(src, dst)
@@ -133,7 +134,8 @@ def select_categories_to_augment(data_path: str):
 
 
 def split_test(data_path: str, test_ratio: float = 0.2,
-                     min_test: int = 100, seed: int = 42, test_path: str = "test_images"):
+               min_test: int = 100, seed: int = 42,
+               test_path: str = "test_images"):
     """
     Move test_ratio of images from each category into an
     'test_images' folder (sibling of data_path).
@@ -164,7 +166,8 @@ def split_test(data_path: str, test_ratio: float = 0.2,
     return test_path
 
 
-def balance_dataset(data_path: str, dst: str = None, test_path: str = "test_images"):
+def balance_dataset(data_path: str, dst: str = None,
+                    test_path: str = "test_images"):
     """
     Copy the dataset to augmented_images, split 20% of each category
     into test_images, then augment under-represented categories
@@ -209,7 +212,8 @@ def balance_dataset(data_path: str, dst: str = None, test_path: str = "test_imag
                 ]
             augmented = TRANSFORM_FUNCS[tf_name](image)
             out_path = os.path.join(dir_path,
-                                    f"{base}_aug{generated}_{tf_name}{ext_out}")
+                                    f"{base}_aug{generated}_{tf_name}\
+                                    {ext_out}")
             cv2.imwrite(out_path, augmented)
             generated += 1
         print(f"{name}: +{generated} images ({current_size} -> {target_size})")

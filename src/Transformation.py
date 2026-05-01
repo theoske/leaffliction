@@ -144,7 +144,7 @@ def process_directory(src_dir: str, dst_dir: str, transform_name: str):
     if not images:
         return
     for img_path in images:
-        out = save_transform(img_path, transform_name, dst_dir)
+        save_transform(img_path, transform_name, dst_dir)
     print(f"Processed {len(images)} images -> {dst_dir}")
 
 
@@ -176,7 +176,8 @@ def main():
                     "ROI objects, analyze object, pseudolandmarks"
     )
     parser.add_argument("image", nargs="?",
-                        help="Path to a single image (displays all transforms)")
+                        help="Path to a single image \
+                            (displays all transforms)")
     parser.add_argument("-s", "--source",
                         help="Source directory of images (batch mode)")
     parser.add_argument("-d", "--destination",
