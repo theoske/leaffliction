@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.utils import image_dataset_from_directory
 
 
 def load_and_preprocess_image(img_path):
@@ -35,6 +36,32 @@ def get_pure_img(base_img_path: str):
         return None
     pure_img = image.load_img(pure_path, target_size=(256, 256))
     return pure_img
+
+
+def evaluate_model(model_path, folder_path):
+    """Evaluate the model on all JPG files in the given folder."""
+    try:
+        model = load_model(model_path)
+    except ValueError as e:
+        print(f"ERROR : {e}")
+        exit(-1)
+    print(f"Model loaded from {model_path}")
+    try:
+        dataset = image_dataset_from_directory(
+            folder_path,
+            image_size=(256, 256),
+            batch_size=32,
+            label_mode="categorical",
+            shuffle=False
+        )
+    except Exception as e:
+        print(f"ERROR creating dataset: {e}")
+        exit(-1)
+    try:
+        model.evaluate(dataset)
+    except Exception as e:
+        print(f"ERROR : {e}")
+        exit(-1)
 
 
 def predict_and_display(model_path, img_path):
@@ -85,9 +112,13 @@ def main():
                                      Keras model.")
     parser.add_argument("model_path", type=str, help="Path to the .keras \
                         model file")
-    parser.add_argument("image_path", type=str, help="Path to the image file")
+    parser.add_argument("image_path", type=str, help="Path to the image file \
+                        or folder")
     args = parser.parse_args()
-    predict_and_display(args.model_path, args.image_path)
+    if os.path.isdir(args.image_path):
+        evaluate_model(args.model_path, args.image_path)
+    else:
+        predict_and_display(args.model_path, args.image_path)
 
 
 if __name__ == "__main__":
