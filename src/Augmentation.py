@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from glob import glob
 from Distribution import get_distribution
+import matplotlib.pyplot as plt
 
 
 def apply_flip(image: np.ndarray) -> np.ndarray:
@@ -50,10 +51,9 @@ def apply_shear(image: np.ndarray) -> np.ndarray:
     h, w = image.shape[:2]
     shear = np.random.uniform(-0.3, 0.3)
     M = np.float32([[1, shear, 0], [0, 1, 0]])
-    new_w = int(w + abs(shear) * h)
     if shear < 0:
         M[0, 2] = abs(shear) * h
-    return cv2.warpAffine(image, M, (new_w, h),
+    return cv2.warpAffine(image, M, (w, h),
                           borderMode=cv2.BORDER_REFLECT_101)
 
 
@@ -92,28 +92,39 @@ TRANSFORMATIONS = list(TRANSFORM_FUNCS.keys())
 RANDOM_TRANSFORMATIONS = [k for k in TRANSFORM_FUNCS if k != "Flip"]
 
 
+def display_augmentations(images_path: list):
+    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+    fig.canvas.manager.set_window_title("Augmentation.py")
+    i = 1
+    for image_path in images_path:
+        img = cv2.imread(image_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        plt.subplot(2, 3, i)
+        plt.imshow(img)
+        plt.axis('off')
+        plt.title(image_path.split('/')[-1])
+        i += 1
+    plt.tight_layout()
+    plt.show()
+
+
 def augment_image(image_path: str, output_dir: str = None):
     """Apply all 6 augmentations to a single image and save results."""
     image = cv2.imread(image_path)
     if image is None:
         print(f"Error: cannot read {image_path}")
         return []
-
     if output_dir is None:
         output_dir = os.path.dirname(os.path.abspath(image_path))
-
     os.makedirs(output_dir, exist_ok=True)
-
     base = os.path.splitext(os.path.basename(image_path))[0]
     ext = os.path.splitext(image_path)[1]
     saved = []
-
     for name, func in TRANSFORM_FUNCS.items():
         augmented = func(image)
         out_path = os.path.join(output_dir, f"{base}_{name}{ext}")
         cv2.imwrite(out_path, augmented)
         saved.append(out_path)
-
     return saved
 
 
@@ -240,6 +251,7 @@ def main():
         saved = augment_image(args.image, args.output)
         if saved:
             print(f"Saved {len(saved)} augmented images.")
+            display_augmentations(saved)
     else:
         parser.print_help()
 
