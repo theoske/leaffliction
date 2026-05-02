@@ -15,8 +15,7 @@ def get_distribution(data_path: str) -> dict:
     Takes a directory's path, gets the subdirectories name and counts their
     files.
     Since the subdirectories can belong to multiple plant categories
-    (ex: apple, grape...) we also retrieve it.
-    cat dict-> dirslists -> dirdict
+    (ex: apple, grape...) we also retrieve this info.
     """
     if not is_dir(data_path):
         exit(-1)
@@ -42,6 +41,9 @@ def get_distribution(data_path: str) -> dict:
 
 
 def display_distribution(distribution: dict) -> None:
+    """
+    Uses matplotlib to display pie and bar distribution charts.
+    """
     if len(distribution) < 2:
         print("ERROR: Not enough data for piechart, need 2.")
         exit(1)
@@ -64,6 +66,10 @@ def display_distribution(distribution: dict) -> None:
 
 
 def main():
+    """
+    Takes the root folder as argument, counts the files in each sub-folder and
+    displays the data distribution using matplotlib.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("folder_path", nargs="?", help="Base folder path",
                         default="../images")
