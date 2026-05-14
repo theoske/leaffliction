@@ -8,7 +8,11 @@ from tensorflow.keras.utils import image_dataset_from_directory
 
 
 def load_and_preprocess_image(img_path):
-    """Load and preprocess an image for prediction."""
+    """
+    Load and preprocess an image for prediction.
+    np.expand_dims() is necessary because keras needs the channel dimension
+    even for a single image.
+    """
     try:
         img = image.load_img(img_path, target_size=(256, 256))
     except Exception as e:
@@ -20,6 +24,10 @@ def load_and_preprocess_image(img_path):
 
 
 def get_pure_img(base_img_path: str):
+    """
+    Takes a modified image's path and returns the original, unmodified
+    image using the image modification naming convention.
+    """
     if not os.path.exists("../images"):
         print("no ../images folder")
         return None
