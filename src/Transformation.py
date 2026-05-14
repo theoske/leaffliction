@@ -33,6 +33,9 @@ def transform_mask(image: np.ndarray) -> np.ndarray:
 
 
 def transform_roi_objects(image: np.ndarray) -> np.ndarray:
+    """
+    ROI = Region Of Interest
+    """
     mask = transform_mask(image)
     h, w = image.shape[:2]
     roi = pcv.roi.rectangle(img=image, x=0, y=0, w=w, h=h)
@@ -47,8 +50,16 @@ def transform_analyze_object(image: np.ndarray) -> np.ndarray:
 
 
 def transform_pseudolandmarks(image: np.ndarray) -> np.ndarray:
+    """
+    Creates a mask.
+    Finds top bottom and center of leaf x axis.
+    Draws circle on landmarks.
+    np.ogrid is an open multi-dimensional meshgrid which
+    allows to efficiently draw circles on the images.
+    """
     mask = transform_mask(image)
     result = image.copy()
+    # gets the pseudolandmarks coordinates
     top, bottom, center = pcv.homology.x_axis_pseudolandmarks(
         img=image, mask=mask
     )
@@ -59,11 +70,16 @@ def transform_pseudolandmarks(image: np.ndarray) -> np.ndarray:
         (bottom, (0, 128, 255)),
         (center, (255, 0, 255)),
     ]
+    # yy represent y coordinates and xx represents x coordinates of the image
     yy, xx = np.ogrid[0:result.shape[0], 0:result.shape[1]]
+    # add the landmarks to the image
     for pts, color in groups:
         for pt in pts:
+            # cx and cy are the coordinates of the center of the cirle
             cx, cy = int(pt[0][0]), int(pt[0][1])
+            # Computes the circle's area mask with a 5px radius
             circle = (xx - cx) ** 2 + (yy - cy) ** 2 <= 25
+            # applies the mask's color
             result[circle] = color
     return result
 
