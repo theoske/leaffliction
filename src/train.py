@@ -13,6 +13,10 @@ print(tf.config.list_physical_devices())
 
 
 def get_data(data_dir: str, test_dir: str = "../newdata/test"):
+    """
+    Takes images from folder, divides them into training, evaluating and
+    testing datasets and returns them in keras format.
+    """
     if not os.path.isdir(data_dir):
         print("ERROR: No data for training.")
         exit(-1)
@@ -93,6 +97,9 @@ def prepare_ds(base_img: str):
 
 def archive_training(data_path: str = "../newdata",
                      model_path: str = "model.keras", dst: str = "archive"):
+    """
+    Saves training datasets and resulting model in a zip file.
+    """
     if not os.path.exists(data_path):
         print(f"ERROR: can't zip unexistant folder {data_path}")
         return
@@ -107,6 +114,11 @@ def archive_training(data_path: str = "../newdata",
 
 
 def train(data_dir: str):
+    """
+    Core of the CNN.
+    Makes the data go through 4 blocks of convolutions and feeds the resulting
+    data to the 2 layer neural network.
+    """
     data_dir = prepare_ds(data_dir)
     training_ds, validation_ds, testing_ds = get_data(data_dir)
     model = models.Sequential([
