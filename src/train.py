@@ -119,6 +119,15 @@ def train(data_dir: str):
     Makes the data go through 4 blocks of convolutions and feeds the resulting
     data to the 2 layer neural network.
     """
+    gpus = tf.config.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                # Active l'allocation dynamique de la mémoire (Memory Growth)
+                tf.config.experimental.set_memory_growth(gpu, True)
+            print("Optimisation VRAM : Activée")
+        except RuntimeError as e:
+            print(e)
     data_dir = prepare_ds(data_dir)
     training_ds, validation_ds, testing_ds = get_data(data_dir)
     model = models.Sequential([
