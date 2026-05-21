@@ -9,10 +9,12 @@ import os
 from Augmentation import balance_dataset
 from Transformation import process_base_directory
 
+NEWDATA_DIR = "../newdata"
+
 print(tf.config.list_physical_devices())
 
 
-def get_data(data_dir: str, test_dir: str = "../newdata/test"):
+def get_data(data_dir: str, test_dir: str = f"{NEWDATA_DIR}/test"):
     """
     Takes images from folder, divides them into training, evaluating and
     testing datasets and returns them in keras format.
@@ -84,18 +86,18 @@ def prepare_ds(base_img: str):
     if not os.path.isdir(base_img):
         print(f"ERROR: \'{base_img}\' is not a directory.")
         exit(-1)
-    if os.path.exists("../newdata"):
-        print("WARNING: deleting ../newdata folder to replace it.")
-        rmtree("../newdata")
+    if os.path.exists(NEWDATA_DIR):
+        print(f"WARNING: deleting {NEWDATA_DIR} folder to replace it.")
+        rmtree(NEWDATA_DIR)
     test_img = "test"
-    aug_img = "../newdata/augmented_images"
-    trans_img = "../newdata/transformed_images"
+    aug_img = f"{NEWDATA_DIR}/augmented_images"
+    trans_img = f"{NEWDATA_DIR}/transformed_images"
     balance_dataset(base_img, aug_img, test_path=test_img)
     process_base_directory(aug_img, trans_img)
     return trans_img
 
 
-def archive_training(data_path: str = "../newdata",
+def archive_training(data_path: str = NEWDATA_DIR,
                      model_path: str = "model.keras", dst: str = "archive"):
     """
     Saves training datasets and resulting model in a zip file.
@@ -172,7 +174,7 @@ def train(data_dir: str):
     test_loss, test_acc = model.evaluate(testing_ds)
     print(f"Test accuracy: {test_acc * 100:.2f}%")
     model.save("model.keras", overwrite=True)
-    archive_training("../newdata")
+    archive_training(NEWDATA_DIR)
     display_training(history)
 
 
