@@ -9,7 +9,7 @@ import os
 from Augmentation import balance_dataset
 from Transformation import process_base_directory
 
-NEWDATA_DIR = "../newdata"
+NEWDATA_DIR = "./newdata"
 
 print(tf.config.list_physical_devices())
 
@@ -86,12 +86,12 @@ def prepare_ds(base_img: str):
     if not os.path.isdir(base_img):
         print(f"ERROR: \'{base_img}\' is not a directory.")
         exit(-1)
-    if os.path.exists(NEWDATA_DIR):
-        print(f"WARNING: deleting {NEWDATA_DIR} folder to replace it.")
-        rmtree(NEWDATA_DIR)
     test_img = "test"
     aug_img = f"{NEWDATA_DIR}/augmented_images"
     trans_img = f"{NEWDATA_DIR}/transformed_images"
+    if os.path.exists(NEWDATA_DIR):
+        print(f"INFO: {NEWDATA_DIR} already exists, skipping augmentation and transformation.")
+        return trans_img
     balance_dataset(base_img, aug_img, test_path=test_img)
     process_base_directory(aug_img, trans_img)
     return trans_img
