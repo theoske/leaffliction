@@ -24,7 +24,7 @@ def get_data(data_dir: str, test_dir: str = f"{NEWDATA_DIR}/test"):
         exit(-1)
     print(data_dir)
     data_dir = pathlib.Path(data_dir)
-    image_count = len(list(data_dir.glob('*/*.jpg')))
+    image_count = len(list(data_dir.glob('*/*.jpg'))) + len(list(data_dir.glob('*/*.JPG')))
     print(image_count)
     if image_count < 1:
         print("ERROR: No data for training.")
