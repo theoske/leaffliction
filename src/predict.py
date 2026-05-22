@@ -6,6 +6,8 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.utils import image_dataset_from_directory
 
+IMAGES_DIR = "./leaves/images"
+
 
 def load_and_preprocess_image(img_path):
     """
@@ -28,8 +30,8 @@ def get_pure_img(base_img_path: str):
     Takes a modified image's path and returns the original, unmodified
     image using the image modification naming convention.
     """
-    if not os.path.exists("../images"):
-        print("no ../images folder")
+    if not os.path.exists(IMAGES_DIR):
+        print(f"no {IMAGES_DIR} folder")
         return None
     # gets only the file without the parent folders
     filename = base_img_path.split('/')[-1]
@@ -38,9 +40,9 @@ def get_pure_img(base_img_path: str):
     pure = filename.split('_')[0]
     if ".JPG" not in pure:
         pure += ".JPG"
-    pure_path = f"../images/{foldername}/{pure}"
+    pure_path = f"{IMAGES_DIR}/{foldername}/{pure}"
     if not os.path.exists(pure_path):
-        print(f"../images/{pure} does not exist")
+        print(f"{IMAGES_DIR}/{pure} does not exist")
         return None
     pure_img = image.load_img(pure_path, target_size=(256, 256))
     return pure_img
