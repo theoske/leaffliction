@@ -222,9 +222,9 @@ def balance_dataset(data_path: str, dst: str = None,
                     generated % len(RANDOM_TRANSFORMATIONS)
                 ]
             augmented = TRANSFORM_FUNCS[tf_name](image)
-            out_path = os.path.join(dir_path,
-                                    f"{base}_aug{generated}_{tf_name}\
-                                    {ext_out}")
+            out_path = os.path.join(
+                dir_path, f"{base}_aug{generated}_{tf_name}{ext_out}"
+            )
             cv2.imwrite(out_path, augmented)
             generated += 1
         print(f"{name}: +{generated} images ({current_size} -> {target_size})")
