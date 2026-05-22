@@ -112,7 +112,8 @@ def predict_and_display(model_path, img_path):
     plt.title(f"Predicted: Class {predicted_class} (Confidence: \
               {confidence:.2f})")
     plt.tight_layout()
-    plt.show()
+    plt.savefig('prediction.png')
+    plt.clf()
 
 
 def main():
